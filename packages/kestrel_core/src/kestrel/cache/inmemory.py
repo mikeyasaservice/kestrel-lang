@@ -18,7 +18,7 @@ from kestrel.ir.instructions import (
     TransformingInstruction,
     Variable,
 )
-from pandas import DataFrame
+from kestrel.compat import DataFrame
 from typeguard import typechecked
 
 

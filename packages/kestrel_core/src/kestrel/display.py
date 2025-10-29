@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import List, Mapping, Union
 
 from mashumaro.mixins.json import DataClassJSONMixin
-from pandas import DataFrame
+from kestrel.compat import DataFrame
 
 
 @dataclass

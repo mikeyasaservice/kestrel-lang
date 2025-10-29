@@ -1,4 +1,4 @@
-from pandas import DataFrame
+from kestrel.compat import DataFrame
 
 CACHE_INTERFACE_IDENTIFIER = "cache"
 CACHE_STORAGE_IDENTIFIER = "local"

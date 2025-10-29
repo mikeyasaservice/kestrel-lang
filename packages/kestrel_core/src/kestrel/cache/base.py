@@ -6,7 +6,7 @@ from uuid import UUID
 
 from kestrel.config.internal import CACHE_INTERFACE_IDENTIFIER, CACHE_STORAGE_IDENTIFIER
 from kestrel.interface import DatasourceInterface
-from pandas import DataFrame
+from kestrel.compat import DataFrame
 
 
 class AbstractCache(DatasourceInterface, MutableMapping):

@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from typing import List, Mapping, Union
 
-import pandas
+import polars as pl
 import yaml
 from kestrel.exceptions import (
     InvalidKestrelConfig,
@@ -89,7 +89,7 @@ def load_kestrel_config() -> Mapping:
 
 
 @typechecked
-def load_relation_configs(table_name: str) -> pandas.DataFrame:
+def load_relation_configs(table_name: str) -> pl.DataFrame:
     """Load relation tables
 
     Parameters:
@@ -104,7 +104,7 @@ def load_relation_configs(table_name: str) -> pandas.DataFrame:
     if len(filepaths) > 1:
         _logger.error(f"More than one relation table found; will return the first one")
     try:
-        table = pandas.read_csv(filepaths[0])
+        table = pl.read_csv(filepaths[0])
     except:
         raise InvalidKestrelRelationTable(filepaths[0])
     return table
@@ -118,7 +118,7 @@ def get_all_relations() -> List[str]:
         for filepath in list_folder_files(
             "kestrel.config", "relations", extension="csv"
         ):
-            table = pandas.read_csv(filepath)
+            table = pl.read_csv(filepath)
             _relations |= set(table["Relation"].to_list())
         relations = list(_relations)
     return relations

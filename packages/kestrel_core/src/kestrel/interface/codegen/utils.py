@@ -1,7 +1,7 @@
 from itertools import groupby
 from typing import List
 
-from pandas import DataFrame
+from kestrel.compat import DataFrame
 
 
 def variable_attributes_to_dataframe(attrs: List[str]) -> DataFrame:

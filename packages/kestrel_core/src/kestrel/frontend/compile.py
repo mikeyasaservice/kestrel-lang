@@ -54,7 +54,7 @@ from kestrel.mapping.data_model import (
 )
 from kestrel.utils import unescape_quoted_string
 from lark import Token, Transformer
-from pandas import DataFrame
+from kestrel.compat import DataFrame
 from typeguard import typechecked
 
 _logger = logging.getLogger(__name__)

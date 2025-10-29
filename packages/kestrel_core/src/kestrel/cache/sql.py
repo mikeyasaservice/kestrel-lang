@@ -25,7 +25,7 @@ from kestrel.ir.instructions import (
     TransformingInstruction,
     Variable,
 )
-from pandas import DataFrame, read_sql
+from kestrel.compat import DataFrame, read_database, write_database
 from typeguard import typechecked
 
 _logger = logging.getLogger(__name__)
@@ -76,7 +76,7 @@ class SqlCache(AbstractCache):
         os.remove(self.db_path)
 
     def __getitem__(self, instruction_id: UUID) -> DataFrame:
-        return read_sql(self.cache_catalog[instruction_id], self.connection)
+        return read_database(self.cache_catalog[instruction_id], self.connection)
 
     def __delitem__(self, instruction_id: UUID):
         table_name = self.cache_catalog[instruction_id]
@@ -91,10 +91,10 @@ class SqlCache(AbstractCache):
         table_name = instruction_id.hex
         if table_name not in self.cache_catalog:
             self.cache_catalog[instruction_id] = table_name
-            data.to_sql(
-                table_name, con=self.connection, if_exists="replace", index=False
+            write_database(
+                data, table_name, self.connection, if_exists="replace"
             )
-            self.cache_catalog_schemas[instruction_id] = list(data)
+            self.cache_catalog_schemas[instruction_id] = data.columns
         else:
             _logger.debug(f"instruction already cached: {instruction_id}, {data}")
 
@@ -118,7 +118,7 @@ class SqlCache(AbstractCache):
             translator = self._evaluate_instruction_in_graph(graph, instruction)
             # TODO: may catch error in case evaluation starts from incomplete SQL
             _logger.debug(f"SQL query generated: {translator.result_w_literal_binds()}")
-            df = read_sql(translator.result(), self.connection)
+            df = read_database(translator.result(), self.connection)
 
             # handle Information command
             if isinstance(instruction, Return):

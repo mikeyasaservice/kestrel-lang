@@ -12,7 +12,7 @@ from kestrel.ir.graph import IRGraph
 from kestrel.ir.instructions import Return
 from kestrel.mapping.data_model import reverse_mapping
 from kestrel.utils import list_folder_files, load_data_file
-from pandas import DataFrame
+from kestrel.compat import DataFrame
 from typeguard import typechecked
 
 _logger = logging.getLogger(__name__)

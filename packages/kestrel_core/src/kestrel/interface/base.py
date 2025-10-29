@@ -7,7 +7,7 @@ from kestrel.display import GraphletExplanation
 from kestrel.exceptions import InvalidSerializedDatasourceInterfaceCacheCatalog
 from kestrel.ir.graph import IRGraphEvaluable
 from kestrel.ir.instructions import Instruction
-from pandas import DataFrame
+from kestrel.compat import DataFrame
 
 MODULE_PREFIX = "kestrel_interface_"
 

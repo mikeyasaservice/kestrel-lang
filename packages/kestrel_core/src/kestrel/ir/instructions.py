@@ -26,7 +26,7 @@ from kestrel.ir.filter import (
 )
 from mashumaro.mixins.json import DataClassJSONMixin
 from mashumaro.types import SerializableType
-from pandas import DataFrame, read_json
+from kestrel.compat import DataFrame, read_json
 from typeguard import typechecked
 
 # https://stackoverflow.com/questions/70400639/how-do-i-get-python-dataclass-initvar-fields-to-work-with-typing-get-type-hints

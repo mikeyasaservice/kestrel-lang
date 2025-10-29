@@ -12,7 +12,7 @@ import logging
 
 from kestrel.exceptions import KestrelError
 from kestrel.session import Session
-from pandas import DataFrame
+from kestrel.compat import DataFrame
 
 
 def add_logging_handler(handler, if_debug):
