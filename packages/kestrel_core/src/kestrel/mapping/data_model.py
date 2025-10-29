@@ -468,6 +468,6 @@ def translate_dataframe(df: DataFrame, to_native_nested_map: dict) -> DataFrame:
                         # if the series is integers, use Int64 (Nullable int) to allow NaN/NA
                         # if not, pandas will use float64 by default, which gives .0
                         if s.dtype == numpy.int64:
-                            df[col] = df[col].astype(Int64Dtype())
+                            df = df.with_columns(pl.col(col).cast(pl.Int64))
     df = df.replace({numpy.nan: None})
     return df
