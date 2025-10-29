@@ -1,6 +1,7 @@
 # Lark Transformer
 
 import logging
+import polars as pl
 from datetime import datetime, timedelta, timezone
 from itertools import chain
 from typing import List, Union
@@ -244,13 +245,13 @@ def _get_entity_event_relation_projection(
     output_type: str,
     relation: str,
 ) -> str:
-    t1 = table[table["OutputType"] == output_type]
-    if t1.empty:
+    t1 = table.filter(pl.col("OutputType") == output_type)
+    if t1.is_empty():
         raise UnsupportedObjectRelation("event", output_type)
     else:
-        t2 = t1[t1["Relation"] == relation]
-        if t2.empty:
-            supported_relations = t1["Relation"].tolist()
+        t2 = t1.filter(pl.col("Relation") == relation)
+        if t2.is_empty():
+            supported_relations = t1["Relation"].to_list()
             raise UnsupportedObjectRelation(
                 "event",
                 relation,
@@ -262,7 +263,7 @@ def _get_entity_event_relation_projection(
                 "event", relation, output_type, output_projections, t2
             )
         else:
-            return t2["OutputProjection"].iloc[0]
+            return t2["OutputProjection"][0]
 
 
 @typechecked
@@ -272,15 +273,15 @@ def _get_entity_entity_relation_specifier_projection(
     output_type: str,
     relation: str,
 ) -> (str, str):
-    t1 = table[
-        (table["OutputType"] == output_type) & (table["InputType"] == input_type)
-    ]
-    if t1.empty:
+    t1 = table.filter(
+        (pl.col("OutputType") == output_type) & (pl.col("InputType") == input_type)
+    )
+    if t1.is_empty():
         raise UnsupportedObjectRelation(input_type, output_type)
     else:
-        t2 = t1[t1["Relation"] == relation]
-        if t2.empty:
-            supported_relations = t1["Relation"].tolist()
+        t2 = t1.filter(pl.col("Relation") == relation)
+        if t2.is_empty():
+            supported_relations = t1["Relation"].to_list()
             raise UnsupportedObjectRelation(
                 input_type,
                 relation,
@@ -290,7 +291,7 @@ def _get_entity_entity_relation_specifier_projection(
         elif t2.shape[0] > 1:
             raise DuplicatedRelationMapping(input_type, relation, output_type, t2)
         else:
-            return t2["InputSpecifier"].iloc[0], t2["OutputProjection"].iloc[0]
+            return t2["InputSpecifier"][0], t2["OutputProjection"][0]
 
 
 @typechecked

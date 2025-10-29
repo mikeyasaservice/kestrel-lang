@@ -2,7 +2,7 @@ import os
 from uuid import uuid4
 
 import pytest
-from pandas import DataFrame, read_csv
+import polars as pl
 
 from kestrel.cache import InMemoryCache
 from kestrel.config import load_kestrel_config
@@ -20,7 +20,7 @@ def process_creation_events():
     parse_kestrel_and_update_irgraph("es = NEW event [ {'id': 1} ]", graph, {})
     data_node = graph.get_nodes_by_type(Construct)[0]
     test_dir = os.path.dirname(os.path.abspath(__file__))
-    data_node.data = SerializableDataFrame(read_csv(os.path.join(test_dir, "logs_ocsf_process_creation.csv")))
+    data_node.data = SerializableDataFrame(pl.read_csv(os.path.join(test_dir, "logs_ocsf_process_creation.csv")))
     return graph
 
 
@@ -32,7 +32,7 @@ def kestrel_config():
 def test_inmemory_cache_set_get_del():
     c = InMemoryCache()
     idx = uuid4()
-    df = DataFrame([1, 2, 3])
+    df = pl.DataFrame([1, 2, 3])
     c[idx] = df
     assert df.equals(c[idx])
     del c[idx]
@@ -41,7 +41,7 @@ def test_inmemory_cache_set_get_del():
 
 def test_inmemory_cache_constructor():
     ids = [uuid4() for i in range(5)]
-    df = DataFrame([1, 2, 3])
+    df = pl.DataFrame([1, 2, 3])
     c = InMemoryCache({x:df for x in ids})
     for u in ids:
         assert df.equals(c[u])
@@ -69,21 +69,21 @@ DISP browsers ATTR name, pid
     # check the return is correct
     assert len(rets) == 1
     df = mapping[rets[0].id]
-    assert df.to_dict("records") == [ {"name": "firefox.exe", "pid": 201}
-                                    , {"name": "chrome.exe", "pid": 205}
-                                    ]
+    assert df.to_dicts() == [ {"name": "firefox.exe", "pid": 201}
+                            , {"name": "chrome.exe", "pid": 205}
+                            ]
     # check whether `proclist` is cached
     proclist = graph.get_variable("proclist")
-    assert c[proclist.id].to_dict("records") == [ {"name": "cmd.exe", "pid": 123}
-                                                , {"name": "explorer.exe", "pid": 99}
-                                                , {"name": "firefox.exe", "pid": 201}
-                                                , {"name": "chrome.exe", "pid": 205}
-                                                ]
+    assert c[proclist.id].to_dicts() == [ {"name": "cmd.exe", "pid": 123}
+                                        , {"name": "explorer.exe", "pid": 99}
+                                        , {"name": "firefox.exe", "pid": 201}
+                                        , {"name": "chrome.exe", "pid": 205}
+                                        ]
     # check whether `browsers` is cached
     browsers = graph.get_variable("browsers")
-    assert c[browsers.id].to_dict("records") == [ {"name": "firefox.exe", "pid": 201}
-                                                , {"name": "chrome.exe", "pid": 205}
-                                                ]
+    assert c[browsers.id].to_dicts() == [ {"name": "firefox.exe", "pid": 201}
+                                        , {"name": "chrome.exe", "pid": 205}
+                                        ]
 
 
 def test_eval_filter_with_ref():
@@ -107,7 +107,7 @@ DISP p2 ATTR name, pid
     # check the return is correct
     assert len(rets) == 1
     df = mapping[rets[0].id]
-    assert df.to_dict("records") == [ {"name": "firefox.exe", "pid": 201} ]
+    assert df.to_dicts() == [ {"name": "firefox.exe", "pid": 201} ]
 
 def test_get_virtual_copy():
     stmt = """
@@ -125,7 +125,7 @@ browsers = proclist WHERE name = 'firefox.exe' OR name = 'chrome.exe'
     mapping = c.evaluate_graph(graph, c)
     v = c.get_virtual_copy()
     new_entry = uuid4()
-    v[new_entry] = DataFrame()
+    v[new_entry] = pl.DataFrame()
 
     # v[new_entry] does not hit c.cache
     assert len(c.cache) == 2

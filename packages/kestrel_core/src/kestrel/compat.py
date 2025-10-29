@@ -24,7 +24,7 @@ def read_database(
 
     Args:
         query: SQL query string or table name
-        connection: Connection URI string or SQLAlchemy engine
+        connection: Connection URI string or SQLAlchemy engine/connection
         **kwargs: Additional arguments passed to read_database
 
     Returns:
@@ -34,22 +34,32 @@ def read_database(
         >>> df = read_database("SELECT * FROM users", "sqlite:///db.sqlite")
         >>> df = read_database("users", sqlalchemy_engine)
     """
-    # Convert SQLAlchemy engine to URI if needed
-    if hasattr(connection, 'url'):
+    # Convert SQLAlchemy Compiler object to string if needed
+    if not isinstance(query, str):
+        query = str(query)
+
+    # Convert table name to query if needed (no spaces and no SQL keywords)
+    query_lower = query.lower().strip()
+    if ' ' not in query and not any(kw in query_lower for kw in ['select', 'with', 'insert', 'update', 'delete']):
+        # This looks like a table name, convert to SELECT query
+        query = f'SELECT * FROM "{query}"'
+
+    # Convert SQLAlchemy engine/connection to URI if needed
+    if hasattr(connection, 'engine'):
+        # This is a SQLAlchemy Connection object
+        connection_uri = str(connection.engine.url)
+    elif hasattr(connection, 'url'):
+        # This is a SQLAlchemy Engine object
         connection_uri = str(connection.url)
     else:
         connection_uri = connection
 
     try:
-        return pl.read_database(query, connection_uri, **kwargs)
+        # Use read_database_uri for consistent behavior
+        return pl.read_database_uri(query, connection_uri, **kwargs)
     except Exception as e:
         _logger.error(f"Failed to read from database: {e}")
-        # Fallback: try read_database_uri
-        try:
-            return pl.read_database_uri(query, connection_uri, **kwargs)
-        except Exception as e2:
-            _logger.error(f"Fallback also failed: {e2}")
-            raise
+        raise
 
 
 def write_database(
@@ -72,20 +82,21 @@ def write_database(
         >>> write_database(df, "users", "sqlite:///db.sqlite")
         >>> write_database(df, "users", engine, if_exists='append')
     """
-    # Convert SQLAlchemy engine to URI if needed
-    if hasattr(connection, 'url'):
+    # Convert SQLAlchemy engine/connection to URI if needed
+    if hasattr(connection, 'engine'):
+        # This is a SQLAlchemy Connection object
+        connection_uri = str(connection.engine.url)
+    elif hasattr(connection, 'url'):
+        # This is a SQLAlchemy Engine object
         connection_uri = str(connection.url)
     else:
         connection_uri = connection
-
-    # Map pandas-style if_exists to Polars engine parameter
-    engine = 'replace' if if_exists in ['replace', 'fail'] else 'append'
 
     try:
         df.write_database(
             table_name=table_name,
             connection=connection_uri,
-            engine=engine,
+            if_table_exists=if_exists,
             **kwargs
         )
     except Exception as e:

@@ -34,9 +34,9 @@ from kestrel.ir.instructions import (
     TransformingInstruction,
 )
 from kestrel.compat import DataFrame
-# TODO Phase 3: Refactor to pure Polars when Ibis replaces this codegen layer
-# Currently uses pandas-specific operations (.apply, .iloc, .itertuples, .set_index)
-from pandas import Series
+import polars as pl
+# TODO Phase 3: Refactor with Ibis when it replaces this codegen layer
+# Currently being migrated from pandas to Polars
 from typeguard import typechecked
 
 
@@ -110,10 +110,10 @@ def _eval_Filter(instruction: Filter, dataframe: DataFrame) -> DataFrame:
 
 
 @typechecked
-def _eval_Filter_exp(exp: FExpression, dataframe: DataFrame) -> Series:
+def _eval_Filter_exp(exp: FExpression, dataframe: DataFrame) -> pl.Series:
     # return: a series of boolean, same length as dataframe
     if isinstance(exp, AbsoluteTrue):
-        bs = Series(True, index=dataframe.index)
+        bs = pl.Series([True] * dataframe.height)
     elif isinstance(exp, BoolExp):
         bs = _eval_Filter_exp_BoolExp(exp, dataframe)
     elif isinstance(exp, MultiComp):
@@ -130,7 +130,7 @@ def _eval_Filter_exp(exp: FExpression, dataframe: DataFrame) -> Series:
 
 
 @typechecked
-def _eval_Filter_exp_BoolExp(boolexp: BoolExp, dataframe: DataFrame) -> Series:
+def _eval_Filter_exp_BoolExp(boolexp: BoolExp, dataframe: DataFrame) -> pl.Series:
     # return: a series of boolean, same length as dataframe
     if boolexp.op == ExpOp.AND:
         bs = _eval_Filter_exp(boolexp.lhs, dataframe) & _eval_Filter_exp(
@@ -149,7 +149,7 @@ def _eval_Filter_exp_BoolExp(boolexp: BoolExp, dataframe: DataFrame) -> Series:
 def _eval_Filter_exp_Comparison(
     c: FBasicComparison,
     df: DataFrame,
-) -> Series:
+) -> pl.Series:
     # return: a series of boolean, same length as dataframe
     comp2func = {
         NumCompOp.EQ: operator.eq,

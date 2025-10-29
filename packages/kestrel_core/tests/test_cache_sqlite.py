@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import pytest
 import sqlalchemy
-from pandas import DataFrame, read_csv
+import polars as pl
 
 from kestrel.config.internal import VIRTUAL_CACHE_VAR_DATA
 from kestrel.cache import SqlCache
@@ -23,7 +23,7 @@ def process_creation_events():
     parse_kestrel_and_update_irgraph("es = NEW event [ {'id': 1} ]", graph, {})
     data_node = graph.get_nodes_by_type(Construct)[0]
     test_dir = os.path.dirname(os.path.abspath(__file__))
-    data_node.data = SerializableDataFrame(read_csv(os.path.join(test_dir, "logs_ocsf_process_creation.csv")))
+    data_node.data = SerializableDataFrame(pl.read_csv(os.path.join(test_dir, "logs_ocsf_process_creation.csv")))
     return graph
 
 
@@ -35,7 +35,7 @@ def kestrel_config():
 def test_sql_cache_set_get_del():
     c = SqlCache()
     idx = uuid4()
-    df = DataFrame({'foo': [1, 2, 3]})
+    df = pl.DataFrame({'foo': [1, 2, 3]})
     c[idx] = df
 
     assert df.equals(c[idx])
@@ -46,7 +46,7 @@ def test_sql_cache_set_get_del():
 
 def test_sql_cache_constructor():
     ids = [uuid4() for i in range(5)]
-    df = DataFrame({'foo': [1, 2, 3]})
+    df = pl.DataFrame({'foo': [1, 2, 3]})
     c = SqlCache({x:df for x in ids})
     for u in ids:
         assert df.equals(c[u])
@@ -73,11 +73,11 @@ DISP proclist ATTR name
     # check the return is correct
     assert len(rets) == 1
     df = mapping[rets[0].id]
-    assert df.to_dict("records") == [ {"name": "cmd.exe"}
-                                    , {"name": "explorer.exe"}
-                                    , {"name": "firefox.exe"}
-                                    , {"name": "chrome.exe"}
-                                    ]
+    assert df.to_dicts() == [ {"name": "cmd.exe"}
+                            , {"name": "explorer.exe"}
+                            , {"name": "firefox.exe"}
+                            , {"name": "chrome.exe"}
+                            ]
 
 
 def test_eval_new_filter_disp():
@@ -99,9 +99,9 @@ DISP browsers ATTR name, pid
     # check the return is correct
     assert len(rets) == 1
     df = mapping[rets[0].id]
-    assert df.to_dict("records") == [ {"name": "firefox.exe", "pid": 201}
-                                    , {"name": "chrome.exe", "pid": 205}
-                                    ]
+    assert df.to_dicts() == [ {"name": "firefox.exe", "pid": 201}
+                            , {"name": "chrome.exe", "pid": 205}
+                            ]
 
     
 def test_eval_two_returns():
@@ -124,10 +124,10 @@ DISP browsers ATTR pid
     gs = graph.find_dependent_subgraphs_of_node(rets[0], c)
     assert len(gs) == 1
     mapping = c.evaluate_graph(gs[0], c)
-    df1 = DataFrame([ {"name": "explorer.exe", "pid": 99}
-                    , {"name": "firefox.exe", "pid": 201}
-                    , {"name": "chrome.exe", "pid": 205}
-                    ])
+    df1 = pl.DataFrame([ {"name": "explorer.exe", "pid": 99}
+                       , {"name": "firefox.exe", "pid": 201}
+                       , {"name": "chrome.exe", "pid": 205}
+                       ])
     assert len(mapping) == 1
     assert df1.equals(mapping[rets[0].id])
 
@@ -135,10 +135,10 @@ DISP browsers ATTR pid
     gs = graph.find_dependent_subgraphs_of_node(rets[1], c)
     assert len(gs) == 1
     mapping = c.evaluate_graph(gs[0], c)
-    df2 = DataFrame([ {"pid": 99}
-                    , {"pid": 201}
-                    , {"pid": 205}
-                    ])
+    df2 = pl.DataFrame([ {"pid": 99}
+                       , {"pid": 201}
+                       , {"pid": 205}
+                       ])
     assert len(mapping) == 1
     assert df2.equals(mapping[rets[1].id])
 
@@ -183,7 +183,7 @@ DISP p2 ATTR name, pid
     # check the return is correct
     assert len(rets) == 1
     df = mapping[rets[0].id]
-    assert df.to_dict("records") == [ {"name": "firefox.exe", "pid": 201} ]
+    assert df.to_dicts() == [ {"name": "firefox.exe", "pid": 201} ]
 
 
 def test_get_virtual_copy():
@@ -202,7 +202,7 @@ browsers = proclist WHERE name = 'firefox.exe' OR name = 'chrome.exe'
     mapping = c.evaluate_graph(graph, c)
     v = c.get_virtual_copy()
     new_entry = uuid4()
-    v[new_entry] = DataFrame()
+    v[new_entry] = pl.DataFrame()
 
     # v[new_entry] calls the right method
     assert isinstance(v, SqlCacheVirtual)
