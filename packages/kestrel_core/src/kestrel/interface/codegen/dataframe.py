@@ -83,30 +83,32 @@ def _eval_Information(instruction: Information, dataframe: DataFrame) -> DataFra
 
 @typechecked
 def _eval_ProjectAttrs(instruction: ProjectAttrs, dataframe: DataFrame) -> DataFrame:
-    cols = set(list(dataframe))
+    cols = set(dataframe.columns)
     invalid_attrs = set(instruction.attrs) - cols
     if invalid_attrs:
         raise InvalidAttributes(list(invalid_attrs))
-    return dataframe[list(instruction.attrs)]
+    return dataframe.select(list(instruction.attrs))
 
 
 @typechecked
 def _eval_ProjectEntity(instruction: ProjectEntity, dataframe: DataFrame) -> DataFrame:
     if instruction.ocsf_field == "event":
-        df = dataframe.drop_duplicates()
+        df = dataframe.unique()
     else:
         # No translation/mapping, assuming the data is already in OCSF (Kestrel extension)
-        df = dataframe[
-            [col for col in dataframe if col.startswith(instruction.ocsf_field)]
-        ]
-        df = df.rename(columns=lambda x: x[len(instruction.ocsf_field) + 1 :])
-        df = df.drop_duplicates()
+        df = dataframe.select(
+            [col for col in dataframe.columns if col.startswith(instruction.ocsf_field)]
+        )
+        # Rename columns by removing the prefix
+        prefix_len = len(instruction.ocsf_field) + 1
+        df = df.rename({col: col[prefix_len:] for col in df.columns})
+        df = df.unique()
     return df
 
 
 @typechecked
 def _eval_Filter(instruction: Filter, dataframe: DataFrame) -> DataFrame:
-    return dataframe[_eval_Filter_exp(instruction.exp, dataframe)]
+    return dataframe.filter(_eval_Filter_exp(instruction.exp, dataframe))
 
 
 @typechecked
@@ -177,16 +179,17 @@ def _eval_Filter_exp_Comparison(
     # TODO: may upgrade from List to Set for faster IN test
     if isinstance(c.value, DataFrame):
         if len(c.value.columns) == 1:
-            c.value = list(c.value.iloc[:, 0])
+            c.value = c.value[c.value.columns[0]].to_list()
         else:
-            c.value = list(c.value.itertuples(index=False, name=None))
+            c.value = [tuple(row) for row in c.value.iter_rows()]
 
     try:
         # RefComparison has .fields; others have .field
         if isinstance(c, RefComparison):
             if len(c.fields) == 1:
-                bools = df[c.fields[0]].apply(
-                    functools.partial(comp2func[c.op], c.value)
+                bools = df[c.fields[0]].map_elements(
+                    functools.partial(comp2func[c.op], c.value),
+                    return_dtype=pl.Boolean
                 )
             else:
                 if not (
@@ -200,12 +203,22 @@ def _eval_Filter_exp_Comparison(
                 if c.op not in (ListOp.IN, ListOp.NIN):
                     raise InvalidOperatorInMultiColumnComparison(c)
 
-                bools = df.set_index(c.fields).index.isin(c.value)
-                # keep type consistent: from ndarray to Series
-                # flip boolean if the operator is "not in"
-                bools = Series(bools) if c.op == ListOp.IN else ~Series(bools)
+                # Multi-column IN/NIN: check if row tuples are in the list
+                # Create a struct from the fields and check membership
+                struct_col = pl.struct(c.fields)
+                row_tuples = df.select(struct_col).to_series().map_elements(
+                    lambda x: tuple(x.values()) if isinstance(x, dict) else tuple(x),
+                    return_dtype=pl.Object
+                )
+                bools = row_tuples.map_elements(
+                    lambda x: x in c.value if c.op == ListOp.IN else x not in c.value,
+                    return_dtype=pl.Boolean
+                )
         else:
-            bools = df[c.field].apply(functools.partial(comp2func[c.op], c.value))
+            bools = df[c.field].map_elements(
+                functools.partial(comp2func[c.op], c.value),
+                return_dtype=pl.Boolean
+            )
         return bools
     except KeyError as e:
         raise e
