@@ -6,6 +6,22 @@
 
 |
 
+**AETHER FORK NOTICE**
+======================
+
+This is an **actively maintained fork** by the Aether threat hunting platform team.
+
+The original ``opencybersecurityalliance/kestrel-lang`` project has been **inactive since 2024**. We're committed to:
+
+- ✅ **Active maintenance** - Monthly releases, 48-72 hour issue response
+- ✅ **Modern Python** - Python 3.10+ support
+- ✅ **High performance** - Polars, DuckDB, Ibis analytics
+- ✅ **Backward compatible** - Existing huntbooks work unchanged
+
+See `FORK.md <FORK.md>`_ for details. Original project: https://github.com/opencybersecurityalliance/kestrel-lang
+
+|
+
 Hunt with Native Query/Script (left) or Kestrel (right)?
 ========================================================
 
