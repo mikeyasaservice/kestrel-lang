@@ -4,14 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kestrel_core"
-version = "2.0.0b"
-description = "Kestrel Threat Hunting Language"
+version = "2.1.0.dev0"
+description = "Kestrel Threat Hunting Language - Aether Fork"
 readme = "README.rst"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = {text = "Apache 2.0 License"}
 maintainers = [
-    {name = "Xiaokui Shu", email = "xiaokui.shu@ibm.com"},
-    {name = "Paul Coccoli", email = "pcoccoli@us.ibm.com"},
+    {name = "Aether Team", email = "jules@aether-security.com"},
 ]
 keywords = [
     "kestrel",
@@ -21,37 +20,48 @@ keywords = [
     "threat hunting",
     "huntflow",
     "entity",
+    "polars",
+    "analytics",
 ]
 classifiers = [
     "Topic :: Security",
     "Operating System :: OS Independent",
     "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 
 dependencies = [
     "typeguard>=4.3.0",
     "pyyaml>=6.0.1",
     "lark>=1.1.9",
-    "pandas>=2.0.3", # any higher version drops Python 3.8 support
+    "pandas>=2.0.3",
     "pyarrow>=17.0.0",
     "mashumaro>=3.13.1",
-    "networkx>=3.1", # any higher version drops Python 3.8 support
+    "networkx>=3.1",
     "SQLAlchemy>=2.0.31",
+    "polars>=0.19.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "black",
+    "mypy",
+    "types-PyYAML",
 ]
 test = [
     "pytest",
+    "pytest-cov",
 ]
 
 [project.urls]
-Homepage = "https://github.com/opencybersecurityalliance/kestrel-lang"
+Homepage = "https://github.com/mikeyasaservice/kestrel-lang"
 Documentation = "https://kestrel.readthedocs.io/"
-Repository = "https://github.com/opencybersecurityalliance/kestrel-lang.git"
+Repository = "https://github.com/mikeyasaservice/kestrel-lang.git"
+"Original Project" = "https://github.com/opencybersecurityalliance/kestrel-lang"
+"Issue Tracker" = "https://github.com/mikeyasaservice/kestrel-lang/issues"
 
 [project.scripts]
 kestrel = "kestrel.cli:kestrel"
