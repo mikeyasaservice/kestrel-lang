@@ -36,7 +36,8 @@ if is_python_older_than_minor_version(11):
 
 class SerializableDataFrame(DataFrame, SerializableType):
     def _serialize(self):
-        return self.to_json()
+        # Polars uses write_json() instead of to_json()
+        return self.write_json()
 
     @classmethod
     def _deserialize(cls, json_str):

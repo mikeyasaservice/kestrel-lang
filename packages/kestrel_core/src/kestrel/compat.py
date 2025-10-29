@@ -34,9 +34,25 @@ def read_database(
         >>> df = read_database("SELECT * FROM users", "sqlite:///db.sqlite")
         >>> df = read_database("users", sqlalchemy_engine)
     """
-    # Convert SQLAlchemy Compiler object to string if needed
+    # Convert SQLAlchemy Compiler object to string with literal binds
     if not isinstance(query, str):
-        query = str(query)
+        # Check if it's already a Compiled object (has compile() been called)
+        if hasattr(query, 'statement'):
+            # This is a Compiled object, get the statement and recompile with literal_binds
+            from sqlalchemy import __version__ as sa_version
+            try:
+                # For SQLAlchemy 2.x
+                query = str(query.statement.compile(
+                    compile_kwargs={"literal_binds": True}
+                ))
+            except Exception:
+                # Fallback: just stringify
+                query = str(query)
+        elif hasattr(query, 'compile'):
+            # This is a Selectable, compile it with literal_binds
+            query = str(query.compile(compile_kwargs={"literal_binds": True}))
+        else:
+            query = str(query)
 
     # Convert table name to query if needed (no spaces and no SQL keywords)
     query_lower = query.lower().strip()
