@@ -33,7 +33,10 @@ from kestrel.ir.instructions import (
     SourceInstruction,
     TransformingInstruction,
 )
-from pandas import DataFrame, Series
+from kestrel.compat import DataFrame
+# TODO Phase 3: Refactor to pure Polars when Ibis replaces this codegen layer
+# Currently uses pandas-specific operations (.apply, .iloc, .itertuples, .set_index)
+from pandas import Series
 from typeguard import typechecked
 
 

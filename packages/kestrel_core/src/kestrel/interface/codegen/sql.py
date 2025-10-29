@@ -39,7 +39,9 @@ from kestrel.mapping.data_model import (
     translate_projection_to_native,
 )
 from kestrel.mapping.utils import get_type_from_projection
-from pandas import DataFrame
+from kestrel.compat import DataFrame
+# TODO Phase 3: Remove when Ibis replaces SQL codegen layer
+# Currently uses pandas.io.sql internals for SQL table operations
 from pandas.io.sql import SQLTable, pandasSQL_builder
 from sqlalchemy import and_, asc, column, desc, or_, select, tuple_
 from sqlalchemy.engine import Compiled, Connection, default

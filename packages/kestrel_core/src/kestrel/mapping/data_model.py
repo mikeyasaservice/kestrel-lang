@@ -9,7 +9,8 @@ from kestrel.exceptions import IncompleteDataMapping
 from kestrel.ir.filter import ReferenceValue
 from kestrel.mapping.transformers import run_transformer, run_transformer_on_series
 from kestrel.utils import list_folder_files
-from pandas import DataFrame, Int64Dtype
+from kestrel.compat import DataFrame
+import polars as pl
 from typeguard import typechecked
 
 _logger = logging.getLogger(__name__)

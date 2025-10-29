@@ -38,6 +38,7 @@ dependencies = [
     "pyyaml>=6.0.1",
     "lark>=1.1.9",
     "polars>=0.19.0",
+    "pandas>=2.0.3",  # TODO Phase 3: Remove when Ibis replaces codegen layer
     "pyarrow>=17.0.0",
     "mashumaro>=3.13.1",
     "networkx>=3.1",
@@ -54,9 +55,6 @@ dev = [
 test = [
     "pytest",
     "pytest-cov",
-]
-pandas = [
-    "pandas>=2.0.3",  # Optional backward compatibility
 ]
 
 [project.urls]
